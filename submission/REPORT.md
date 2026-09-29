@@ -23,9 +23,9 @@
 | PII redaction | [`evidence/05-pii-redaction.txt`](evidence/05-pii-redaction.txt) |
 | Trace list | [`evidence/06-trace-list.png`](evidence/06-trace-list.png) |
 | Trace waterfall | [`evidence/07-trace-waterfall.png`](evidence/07-trace-waterfall.png) · cây observation qua API: [`evidence/07-trace-tree-api.txt`](evidence/07-trace-tree-api.txt) |
-| Trace metadata | [`evidence/08-trace-metadata.png`](evidence/08-trace-metadata.png) |
-| Prompt versions | [`evidence/09-prompt-versions.png`](evidence/09-prompt-versions.png) |
-| Prompt rollback | [`evidence/10-prompt-rollback.png`](evidence/10-prompt-rollback.png) · trạng thái label trước/sau: [`evidence/10-prompt-rollback.txt`](evidence/10-prompt-rollback.txt) · trace IDs: [`evidence/10-prompt-traces.txt`](evidence/10-prompt-traces.txt) |
+| Trace metadata | [`evidence/08-trace-metadata.png`](evidence/08-trace-metadata.png) — ảnh chụp tab Input/Output của `llm-generation`; `correlation_id` không hiện trong khung hình này, xem log tương ứng ở [`evidence/04-structured-log.txt`](evidence/04-structured-log.txt) (cùng `trace_id`, cột `correlation_id`) |
+| Prompt versions | [`evidence/09-prompt-versions.png`](evidence/09-prompt-versions.png) — ảnh chụp danh sách prompt (`day13-chat`, 2 versions), chưa mở chi tiết từng label; label thật tại thời điểm chạy nằm ở [`evidence/10-prompt-rollback.txt`](evidence/10-prompt-rollback.txt) |
+| Prompt rollback | **Chưa có ảnh UI** (bỏ qua theo quyết định của học viên). Bằng chứng thay thế: trạng thái label trước/sau qua `scripts/prompt_versions.py` ở [`evidence/10-prompt-rollback.txt`](evidence/10-prompt-rollback.txt) và trace IDs của từng version/label ở [`evidence/10-prompt-traces.txt`](evidence/10-prompt-traces.txt) |
 | Dashboard runtime | [`evidence/11-dashboard-overview.png`](evidence/11-dashboard-overview.png) |
 | Incident metric | [`evidence/12-incident-metric.png`](evidence/12-incident-metric.png) |
 | Incident log | [`evidence/13-incident-log.txt`](evidence/13-incident-log.txt) |
@@ -112,9 +112,9 @@
 ## 9. Checklist trước khi nộp
 
 - [x] Kết quả và evidence thuộc commit SHA cuối.
-- [ ] Tất cả ảnh/output mở được bằng đường dẫn tương đối (còn thiếu ảnh UI Langfuse 06–10, 14).
+- [x] Tất cả ảnh/output mở được bằng đường dẫn tương đối.
 - [x] Incident evidence nối đúng metric → log → trace.
-- [ ] Trace/prompt evidence thuộc project Langfuse cá nhân và ảnh không lộ key/secret (chờ chụp ảnh UI).
+- [x] Trace/prompt evidence thuộc project Langfuse cá nhân và ảnh không lộ key/secret. Riêng ảnh `08` (metadata đầy đủ có `correlation_id`) và `10` (rollback trên UI) không chụp; xem ghi chú thay thế ở mục 2.
 - [x] Repository chạy lại được theo README.
 - [x] Không có secret, API key, PII thô hoặc evidence của người khác/lớp khác.
 - [ ] URL repo và commit SHA cuối đã được nộp trên LMS/Codelabs.
