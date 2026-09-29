@@ -20,3 +20,28 @@ def test_scrub_common_vietnamese_phone_formats() -> None:
         out = scrub_text(f"Contact: {phone_number}")
         assert phone_number not in out
         assert "REDACTED_PHONE_VN" in out
+
+
+def test_scrub_cccd_12_digits() -> None:
+    out = scrub_text("CCCD 079204001234 da xac minh")
+    assert "079204001234" not in out
+    assert "REDACTED_CCCD" in out
+
+
+def test_scrub_credit_card_formats_fully() -> None:
+    for card in ("4111111111111111", "4111 1111 1111 1111", "4111-1111-1111-1111"):
+        out = scrub_text(f"Card: {card}")
+        assert "REDACTED_CREDIT_CARD" in out
+        # Không được để sót 4 số cuối vì pattern ngắn hơn chạy trước
+        assert "1111" not in out
+
+
+def test_scrub_passport_vn() -> None:
+    out = scrub_text("Passport B1234567 het han 2030")
+    assert "B1234567" not in out
+    assert "REDACTED_PASSPORT_VN" in out
+
+
+def test_khong_che_nham_du_lieu_binh_thuong() -> None:
+    text = "req-1a2b3c4d latency 1234ms cost 0.000123 order 2026 total 500000"
+    assert scrub_text(text) == text

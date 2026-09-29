@@ -1,0 +1,10 @@
+# PII GIẢ gửi vào /chat (dữ liệu test, không phải người thật):
+#   req-a11ce002: "Email student@vinuni.edu.vn SDT 090 123 4567"
+#   req-a11ce003: "CCCD 079204001234 the 4111 1111 1111 1111"
+
+$ grep -E "req-a11ce00[23]" data/logs.jsonl | grep request_received
+{"service": "api", "payload": {"message_preview": "Email [REDACTED_EMAIL] SDT [REDACTED_PHONE_VN]"}, "event": "request_received", "session_id": "s-pii", "model": "claude-sonnet-4-5", "env": "dev", "user_id_hash": "4c5fd778540c", "correlation_id": "req-a11ce002", "feature": "qa", "level": "info", "ts": "2026-09-29T08:41:25.186798Z"}
+{"service": "api", "payload": {"message_preview": "CCCD [REDACTED_CCCD] the [REDACTED_CREDIT_CARD]"}, "event": "request_received", "session_id": "s-pii", "model": "claude-sonnet-4-5", "env": "dev", "user_id_hash": "4c5fd778540c", "correlation_id": "req-a11ce003", "feature": "qa", "level": "info", "ts": "2026-09-29T08:41:26.212854Z"}
+
+$ grep -cE "student@vinuni|090 123 4567|079204001234|4111 1111 1111 1111" data/logs.jsonl
+0
