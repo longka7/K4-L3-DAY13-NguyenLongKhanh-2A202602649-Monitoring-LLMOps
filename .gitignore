@@ -9,3 +9,7 @@ data/audit.jsonl
 config/challenge.json
 .pytest_cache/
 .antigravity/
+
+# Artifact sinh khi chạy lab (log cũ, dashboard HTML)
+data/logs.*.jsonl
+data/dashboard.html

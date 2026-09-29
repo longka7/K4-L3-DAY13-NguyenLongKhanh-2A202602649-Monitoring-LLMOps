@@ -40,3 +40,25 @@ def tracing_enabled() -> bool:
     return LANGFUSE_SDK_AVAILABLE and bool(
         os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY")
     )
+
+
+class _NoopObservation:
+    """Thay thế observation khi client không hỗ trợ (tracing tắt hoặc client giả trong test)."""
+
+    def update(self, **kwargs: Any) -> "_NoopObservation":
+        return self
+
+
+@contextmanager
+def child_observation(client: Any, **kwargs: Any):
+    """Mở child observation lồng dưới observation hiện tại (Langfuse v4 ``start_as_current_observation``).
+
+    Client không có API này (tracing tắt / test double) thì chạy như no-op để logic nghiệp vụ
+    không phụ thuộc vào việc tracing có bật hay không.
+    """
+    start = getattr(client, "start_as_current_observation", None)
+    if not callable(start):
+        yield _NoopObservation()
+        return
+    with start(**kwargs) as observation:
+        yield observation

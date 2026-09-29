@@ -82,6 +82,9 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
             quality_score=result.quality_score,
             tool_name="retrieval",
             tool_success=True,
+            trace_id=result.trace_id,
+            prompt_version=result.prompt_version,
+            prompt_label=result.prompt_label,
             payload={"answer_preview": summarize_text(result.answer)},
         )
         return ChatResponse(

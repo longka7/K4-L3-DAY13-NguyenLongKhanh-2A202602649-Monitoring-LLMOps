@@ -1,0 +1,11 @@
+=== TRƯỚC khi promote
+day13-chat v1: labels=['baseline', 'production']
+day13-chat v2: labels=['candidate', 'latest']
+=== promote production -> v2
+production -> v2
+day13-chat v1: labels=['baseline']
+day13-chat v2: labels=['candidate', 'production', 'latest']
+=== rollback production -> v1
+production -> v1
+day13-chat v1: labels=['baseline', 'production']
+day13-chat v2: labels=['candidate', 'latest']

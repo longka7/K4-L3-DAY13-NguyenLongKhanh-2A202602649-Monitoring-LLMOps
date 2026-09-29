@@ -3,13 +3,24 @@ from __future__ import annotations
 import os
 import time
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 from . import metrics
 from .mock_llm import FakeLLM
 from .mock_rag import retrieve
 from .pii import hash_user_id, summarize_text
 from .prompt_management import resolve_prompt
-from .tracing import get_langfuse_client, observe, propagate_attributes, tracing_enabled
+from .tracing import (
+    child_observation,
+    get_langfuse_client,
+    observe,
+    propagate_attributes,
+    tracing_enabled,
+)
+
+# Giá giả lập (USD / 1M token) — dùng chung cho cost trong log, metrics và trace.
+PRICE_INPUT_PER_M = 3
+PRICE_OUTPUT_PER_M = 15
 
 
 @dataclass
@@ -21,6 +32,10 @@ class AgentResult:
     tokens_out: int
     cost_usd: float
     quality_score: float
+    # Để log nối được sang trace (tìm trace theo trace_id thay vì dò theo correlation_id)
+    trace_id: str | None = None
+    prompt_version: str | None = None
+    prompt_label: str | None = None
 
 
 class LabAgent:
@@ -51,7 +66,29 @@ class LabAgent:
             },
         ):
             started = time.perf_counter()
-            docs = retrieve(message)
+            get_trace_id = getattr(langfuse_client, "get_current_trace_id", None)
+            trace_id = get_trace_id() if callable(get_trace_id) else None
+            # Child 1 — retrieval. Chỉ ghi preview đã scrub, không ghi raw query/doc.
+            with child_observation(
+                langfuse_client,
+                name="rag-retrieval",
+                as_type="retriever",
+                input={"query_preview": summarize_text(message)},
+                metadata={"correlation_id": correlation_id, "feature": feature},
+            ) as retrieval_obs:
+                try:
+                    docs = retrieve(message)
+                except Exception as exc:
+                    retrieval_obs.update(
+                        level="ERROR",
+                        status_message=type(exc).__name__,
+                        metadata={"retrieval_success": False},
+                    )
+                    raise
+                retrieval_obs.update(
+                    output={"doc_count": len(docs)},
+                    metadata={"retrieval_success": True},
+                )
             prompt = resolve_prompt(
                 langfuse_client,
                 feature=feature,
@@ -71,10 +108,36 @@ class LabAgent:
                 },
                 version=prompt.version,
             )
-            # TODO (CP2): instrument retrieve() and FakeLLM.generate() as child
-            # observations. The nested generation must receive prompt, usage and cost.
-            with propagate_attributes(prompt=prompt.managed_prompt):
+            # Child 2 — generation: gắn model, prompt managed (link tới prompt version),
+            # usage và cost. Không truyền raw prompt/output (có thể chứa PII).
+            with propagate_attributes(prompt=prompt.managed_prompt), child_observation(
+                langfuse_client,
+                name="llm-generation",
+                as_type="generation",
+                model=self.model,
+                prompt=prompt.managed_prompt,
+                input={"prompt_name": prompt.name, "prompt_version": prompt.version},
+                metadata={
+                    "correlation_id": correlation_id,
+                    "prompt_label": prompt.label,
+                    "prompt_source": prompt.source,
+                },
+            ) as generation_obs:
+                llm_started_at = datetime.now(timezone.utc)
                 response = self.llm.generate(prompt.text)
+                cost_in, cost_out = self._cost_parts(
+                    response.usage.input_tokens, response.usage.output_tokens
+                )
+                generation_obs.update(
+                    output={"answer_preview": summarize_text(response.text)},
+                    completion_start_time=llm_started_at + timedelta(milliseconds=response.ttft_ms),
+                    usage_details={
+                        "input": response.usage.input_tokens,
+                        "output": response.usage.output_tokens,
+                    },
+                    cost_details={"input": cost_in, "output": cost_out, "total": cost_in + cost_out},
+                    metadata={"ttft_ms": response.ttft_ms},
+                )
             quality_score = self._heuristic_quality(message, response.text, docs)
             latency_ms = int((time.perf_counter() - started) * 1000)
             cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
@@ -96,11 +159,16 @@ class LabAgent:
             tokens_out=response.usage.output_tokens,
             cost_usd=cost_usd,
             quality_score=quality_score,
+            trace_id=trace_id,
+            prompt_version=prompt.version,
+            prompt_label=prompt.label,
         )
 
+    def _cost_parts(self, tokens_in: int, tokens_out: int) -> tuple[float, float]:
+        return (tokens_in / 1_000_000) * PRICE_INPUT_PER_M, (tokens_out / 1_000_000) * PRICE_OUTPUT_PER_M
+
     def _estimate_cost(self, tokens_in: int, tokens_out: int) -> float:
-        input_cost = (tokens_in / 1_000_000) * 3
-        output_cost = (tokens_out / 1_000_000) * 15
+        input_cost, output_cost = self._cost_parts(tokens_in, tokens_out)
         return round(input_cost + output_cost, 6)
 
     def _heuristic_quality(self, question: str, answer: str, docs: list[str]) -> float:

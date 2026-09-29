@@ -1,0 +1,5 @@
+# Trace tree lấy từ Langfuse v2 observations API (project day13-k4-l3a-2A202602649)
+# trace 91855decb0b513ea343eb7199ec67b53 (correlation_id req-e04ec907)
+AGENT      lab-agent-run        parent=(root)               model= prompt= vNone usage={} cost={} level=DEFAULT cid=req-e04ec907
+RETRIEVER  rag-retrieval        parent=lab-agent-run        model= prompt= vNone usage={} cost={} level=DEFAULT cid=req-e04ec907
+GENERATION llm-generation       parent=lab-agent-run        model=claude-sonnet-4-5 prompt=day13-chat v1 usage={'input': 28, 'output': 86, 'total': 114} cost={'input': 8.4e-05, 'output': 0.00129, 'total': 0.001374} level=DEFAULT cid=req-e04ec907

@@ -3,11 +3,33 @@ primary_slo:
   name: fast_successful_requests
   window: 28d
   sli:
-    good_event: 'event == "response_sent" and latency_ms <= 3000'
+    # "Tốt" = request trả lời thành công VÀ đủ nhanh. Request lỗi (request_failed) không bao
+    # giờ có response_sent nên tự động bị tính là "xấu".
+    good_event: 'event == "response_sent" and latency_ms <= 2000'
     total_event: 'event == "request_received"'
   target_percent: 99.5
   error_budget_percent: 0.5
-  note: Học viên phải giải thích hoặc điều chỉnh ngưỡng bằng baseline của mình.
+  note: >
+    Điều chỉnh ngưỡng latency của SLI từ 3000ms xuống 2000ms dựa trên baseline đo ngày
+    2026-09-29 (69 request bình thường, có Langfuse tracing): P50=161ms, P95=1004ms,
+    P99=1090ms. 2000ms ≈ 2 x P99 bình thường: đủ headroom cho dao động mạng/Langfuse,
+    nhưng vẫn bắt được sự cố RAG chậm (practice rag_slow cho latency 2.6–2.7s, DƯỚI mức
+    3000ms cũ => SLO cũ không hề phát hiện). Ngưỡng p95 <= 3000ms trong dashboard.yaml giữ
+    nguyên như contract, đóng vai trò "trần cứng" trên panel.
+  error_budget:
+    # 0.5% số request được phép "xấu" trong cửa sổ 28 ngày.
+    formula: 'error_budget_requests = total_requests_28d * (1 - 0.995)'
+    example: >
+      Giả định 1,000 request/ngày -> 28,000 request/28 ngày -> được phép tối đa 140 request
+      xấu (chậm >2s hoặc lỗi). Tương đương ~3.4 giờ nếu toàn bộ traffic hỏng (0.5% x 28d).
+    burn_rate_observed: >
+      Practice tool_fail: 10 request lỗi trong ~1 phút = 7.1% budget tháng (10/140) bị đốt
+      trong 1 phút. Practice rag_slow: 10 request > 2000ms = thêm 7.1%. Hai sự cố ngắn
+      đã tiêu ~14% error budget -> lý do cần alert theo duration ngắn (5 phút) thay vì chờ
+      tổng kết cuối tháng.
+    policy: >
+      Còn < 25% budget: đóng băng thay đổi prompt/model trên production (chỉ cho rollback
+      prompt label); hết budget: chỉ deploy bản sửa lỗi độ tin cậy.
 guardrails:
   error_rate_pct_max: 2
   daily_cost_usd_max: 2.5

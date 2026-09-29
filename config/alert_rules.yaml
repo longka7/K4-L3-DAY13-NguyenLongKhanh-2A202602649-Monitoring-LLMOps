@@ -1,25 +1,35 @@
+# 3 alert symptom-based: đều đo thứ người dùng/ngân sách cảm nhận được (chậm, lỗi, tốn tiền),
+# không đo nội bộ kiểu "CPU cao" hay "vector store down". Nguồn: data/logs.jsonl (cùng nguồn dashboard).
 alerts:
-  - name: TODO_alert_1
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: ChatLatencyP95High
+    severity: warning
+    condition: 'p95(latency_ms where event == "response_sent") > 2000'
+    duration: 5m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#day13-llmops-alerts'
+    owner: Nguyen Long Khanh (on-call LLMOps)
+    slo: primary_slo.fast_successful_requests
     runbook: docs/alerts.md#alert-1
-  - name: TODO_alert_2
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: ChatErrorRateHigh
+    severity: critical
+    # Gồm cả lỗi retrieval: request lỗi -> request_failed, tool_success=false
+    condition: 'count(event == "request_failed") / count(event == "request_received") * 100 > 2'
+    duration: 5m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#day13-llmops-oncall'
+    owner: Nguyen Long Khanh (on-call LLMOps)
+    slo: primary_slo.fast_successful_requests
     runbook: docs/alerts.md#alert-2
-  - name: TODO_alert_3
-    severity: TODO
-    condition: TODO
-    duration: TODO
+  - name: CostPerRequestSpike
+    severity: warning
+    # Baseline bình thường ~0.0021 USD/request; ngưỡng ~2x baseline
+    condition: 'avg(cost_usd where event == "response_sent") > 0.005'
+    duration: 10m
     type: symptom-based
     channel: slack
-    owner: TODO
+    slack_channel: '#day13-llmops-alerts'
+    owner: Nguyen Long Khanh (on-call LLMOps)
+    slo: guardrails.daily_cost_usd_max
     runbook: docs/alerts.md#alert-3

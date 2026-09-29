@@ -1,0 +1,4 @@
+req-0000b001 | label baseline | version 1 | trace c995ec46bb992b5875154ccf172f1fe3
+req-0000c002 | label candidate | version 2 | trace 57e1dac8a61baf38ccc5d6a3647d8941
+req-0000a005 | label production | version 2 | trace 53f067842ee69a2c26c0365224dfa7c8
+req-0000a006 | label production | version 1 | trace ca759857e9615811255fbe0a7b2dfc68
