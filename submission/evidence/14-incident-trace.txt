@@ -1,0 +1,10 @@
+# INCIDENT req-309c0d9d (challenge, feature=monitoring) — trace a8628692e939913889d253bb71e9e293
+  AGENT      lab-agent-run    parent=(root)         duration=2665ms  ttft=None level=DEFAULT cid=req-309c0d9d prompt= v
+  RETRIEVER  rag-retrieval    parent=lab-agent-run  duration=2506ms  ttft=None level=DEFAULT cid=req-309c0d9d prompt= v
+  GENERATION llm-generation   parent=lab-agent-run  duration=155ms  ttft=0.05 level=DEFAULT cid=req-309c0d9d prompt=day13-chat v1
+
+# BASELINE req-e04ec907 (bình thường, feature=qa) — trace 91855decb0b513ea343eb7199ec67b53
+  AGENT      lab-agent-run    parent=(root)         duration=158ms  ttft=None level=DEFAULT cid=req-e04ec907 prompt= v
+  RETRIEVER  rag-retrieval    parent=lab-agent-run  duration=0ms  ttft=None level=DEFAULT cid=req-e04ec907 prompt= v
+  GENERATION llm-generation   parent=lab-agent-run  duration=156ms  ttft=0.052 level=DEFAULT cid=req-e04ec907 prompt=day13-chat v1
+

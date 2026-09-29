@@ -45,3 +45,9 @@ def test_scrub_passport_vn() -> None:
 def test_khong_che_nham_du_lieu_binh_thuong() -> None:
     text = "req-1a2b3c4d latency 1234ms cost 0.000123 order 2026 total 500000"
     assert scrub_text(text) == text
+
+
+def test_khong_che_nham_id_hex() -> None:
+    # Lỗi thật gặp ở CP3: 12 chữ số giữa trace_id hex bị che thành [REDACTED_CCCD]
+    for hex_id in ("8968fc9b123456789012c176ae223299", "req-0901234567ab", "a4111111111111111b"):
+        assert scrub_text(hex_id) == hex_id

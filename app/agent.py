@@ -89,13 +89,25 @@ class LabAgent:
                     output={"doc_count": len(docs)},
                     metadata={"retrieval_success": True},
                 )
-            prompt = resolve_prompt(
+            # Child 1b — lấy prompt từ Langfuse. Trước đây không có span nên ~745ms fetch khi
+            # cache lạnh (CP3) hiện thành "khoảng trống" giữa retrieval và generation.
+            with child_observation(
                 langfuse_client,
-                feature=feature,
-                docs=docs,
-                message=message,
-                enabled=tracing_enabled(),
-            )
+                name="prompt-fetch",
+                as_type="span",
+                metadata={"correlation_id": correlation_id},
+            ) as prompt_obs:
+                prompt = resolve_prompt(
+                    langfuse_client,
+                    feature=feature,
+                    docs=docs,
+                    message=message,
+                    enabled=tracing_enabled(),
+                )
+                prompt_obs.update(
+                    output={"prompt_version": prompt.version, "prompt_source": prompt.source},
+                    level="WARNING" if prompt.fetch_error else None,
+                )
             langfuse_client.update_current_span(
                 metadata={
                     "doc_count": len(docs),

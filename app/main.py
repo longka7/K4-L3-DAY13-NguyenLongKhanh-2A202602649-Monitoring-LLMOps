@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from structlog.contextvars import bind_contextvars
 
 from .agent import LabAgent
@@ -64,7 +65,11 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         payload={"message_preview": summarize_text(body.message)},
     )
     try:
-        result = agent.run(
+        # agent.run là code đồng bộ (retrieval/LLM blocking). Gọi thẳng trong `async def` sẽ chặn
+        # event loop -> 1 retrieval chậm làm mọi request khác xếp hàng (incident CP3: 5 request
+        # đồng thời bị xử lý nối tiếp, client chờ tới 13.4s). Chạy trong threadpool để song song.
+        result = await run_in_threadpool(
+            agent.run,
             user_id=body.user_id,
             feature=body.feature,
             session_id=body.session_id,

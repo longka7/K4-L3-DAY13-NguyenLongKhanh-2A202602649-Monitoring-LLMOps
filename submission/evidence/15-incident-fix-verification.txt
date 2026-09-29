@@ -1,0 +1,35 @@
+# CP3 — so sánh TRƯỚC / SAU fix (rag_slow vẫn bật, cùng 5 query challenge, concurrency 5)
+
+## TRƯỚC fix (09:15:41–09:15:55 UTC): client latency
+[200] req-309c0d9d | monitoring | 13395.9ms
+[200] req-66e12349 | monitoring | 13396.5ms
+[200] req-4c8e6ad7 | monitoring | 13396.8ms
+[200] req-4df20127 | monitoring | 13397.1ms
+[200] req-28a416c6 | monitoring | 13396.6ms
+
+Timeline server (xử lý NỐI TIẾP — request sau chỉ được nhận khi request trước xong):
+09:15:42.207  request_received	req-309c0d9d
+09:15:44.876  response_sent	req-309c0d9d
+09:15:44.878  request_received	req-4c8e6ad7
+09:15:47.549  response_sent	req-4c8e6ad7
+09:15:47.555  request_received	req-4df20127
+09:15:50.221  response_sent	req-4df20127
+09:15:50.224  request_received	req-28a416c6
+09:15:52.893  response_sent	req-28a416c6
+09:15:52.895  request_received	req-66e12349
+09:15:55.574  response_sent	req-66e12349
+
+## SAU fix run_in_threadpool (09:18:32 UTC): client latency
+[200] req-506daaaf | monitoring | 3459.5ms
+[200] req-2c5d1761 | monitoring | 3460.0ms
+[200] req-2a1e1633 | monitoring | 3460.6ms
+[200] req-15904a73 | monitoring | 3461.0ms
+[200] req-07ce69af | monitoring | 3460.6ms
+
+## Trace sau fix 0ef04e8977792c036c0055db0c614e8a (req-2c5d1761): khoảng trống 745ms giữa retrieval và generation
+  rag-retrieval    +0ms → +2506ms
+  (không có span)  +2506ms → +3251ms   <- fetch prompt Langfuse khi cache lạnh, chưa được trace
+  llm-generation   +3251ms → +3412ms
+  => đã thêm child span 'prompt-fetch' (trace cd7588b759fb214192a88573e4c0eda1 có đủ 3 child)
+
+## Sau mitigation (tắt rag_slow): 3 request monitoring = 0.173s / 0.168s / 0.163s

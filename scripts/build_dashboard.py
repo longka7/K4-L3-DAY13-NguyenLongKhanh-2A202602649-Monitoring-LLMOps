@@ -35,7 +35,7 @@ def percentile(values: list[float], p: float) -> float | None:
     return float(items[idx])
 
 
-def load_events(path: Path, minutes: int) -> tuple[list[dict], datetime, datetime]:
+def load_events(path: Path, minutes: int, feature: str | None = None) -> tuple[list[dict], datetime, datetime]:
     events = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -43,6 +43,8 @@ def load_events(path: Path, minutes: int) -> tuple[list[dict], datetime, datetim
         try:
             event = json.loads(line)
         except json.JSONDecodeError:
+            continue
+        if feature and event.get("feature") != feature:
             continue
         if "ts" in event:
             event["_ts"] = _parse_ts(event["ts"])
@@ -160,7 +162,7 @@ PAGE = """<!doctype html>
 <script>
 const D = {data};
 const TH = {thresholds};
-const opts = (unit, extra={{}}) => ({{responsive:true, animation:false, spanGaps:true,
+const opts = (unit, extra={{}}) => ({{responsive:true, animation:false, spanGaps:false,
   plugins:{{legend:{{labels:{{color:'#c9d1d9',boxWidth:10,font:{{size:10}}}}}}}},
   scales:{{x:{{ticks:{{color:'#9aa4ad',maxTicksLimit:8}},grid:{{color:'#222a31'}}}},
           y:{{title:{{display:true,text:unit,color:'#9aa4ad'}},ticks:{{color:'#9aa4ad'}},grid:{{color:'#222a31'}},...extra}}}}}});
@@ -212,10 +214,13 @@ def main() -> None:
     parser.add_argument("--config", default=str(ROOT / "config/dashboard.yaml"))
     parser.add_argument("--logs", default=str(ROOT / "data/logs.jsonl"))
     parser.add_argument("--out", default=str(ROOT / "data/dashboard.html"))
+    parser.add_argument("--feature", help="Chỉ lấy log của 1 feature (khoanh vùng incident)")
     args = parser.parse_args()
 
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
-    events, start, end = load_events(Path(args.logs), config["dashboard"]["time_range_minutes"])
+    events, start, end = load_events(Path(args.logs), config["dashboard"]["time_range_minutes"], args.feature)
+    if args.feature:
+        config["dashboard"]["title"] += f" — filter: feature={args.feature}"
     data = compute(events, start, end)
     Path(args.out).write_text(render(config, data, start, end), encoding="utf-8")
     print(f"Dashboard -> {args.out} ({len(events)} events, {start:%H:%M}–{end:%H:%M} UTC)")

@@ -1,0 +1,15 @@
+# Challenge day13-k4-l3a-monitoring-llmops-v1 · cửa sổ 2026-09-29T09:15:41Z → 2026-09-29T09:15:55Z
+$ jq -c 'select(.event=="response_sent" and .feature=="monitoring" and .latency_ms>2000) | {ts,correlation_id,trace_id,feature,latency_ms,ttft_ms,tool_name,tool_success,prompt_version}' data/logs.jsonl
+{"ts":"2026-09-29T09:15:44.876118Z","correlation_id":"req-309c0d9d","trace_id":"a8628692e939913889d253bb71e9e293","feature":"monitoring","latency_ms":2664,"ttft_ms":50,"tool_name":"retrieval","tool_success":true,"prompt_version":"1"}
+{"ts":"2026-09-29T09:15:47.549740Z","correlation_id":"req-4c8e6ad7","trace_id":"490451d0f179bf25062943db999e6f1a","feature":"monitoring","latency_ms":2669,"ttft_ms":55,"tool_name":"retrieval","tool_success":true,"prompt_version":"1"}
+{"ts":"2026-09-29T09:15:50.221639Z","correlation_id":"req-4df20127","trace_id":"dc3737bec03430c95bb0b44278d74a52","feature":"monitoring","latency_ms":2664,"ttft_ms":55,"tool_name":"retrieval","tool_success":true,"prompt_version":"1"}
+{"ts":"2026-09-29T09:15:52.893666Z","correlation_id":"req-28a416c6","trace_id":"cd26794e960ebb85ad5de2d10d259752","feature":"monitoring","latency_ms":2667,"ttft_ms":53,"tool_name":"retrieval","tool_success":true,"prompt_version":"1"}
+{"ts":"2026-09-29T09:15:55.574608Z","correlation_id":"req-66e12349","trace_id":"2d9471bbdf5fc3e56a10f723d3a25cba","feature":"monitoring","latency_ms":2678,"ttft_ms":53,"tool_name":"retrieval","tool_success":true,"prompt_version":"1"}
+
+# Đối chiếu: request bình thường (feature qa) trước sự cố
+{"ts":"2026-09-29T08:46:48.133106Z","correlation_id":"req-19dce9be","latency_ms":159,"ttft_ms":55}
+{"ts":"2026-09-29T08:46:48.297347Z","correlation_id":"req-8f28b0ce","latency_ms":161,"ttft_ms":55}
+
+# Log đầy đủ của request được chọn
+{"service":"api","payload":{"message_preview":"How should an engineer investigate tail latency?"},"event":"request_received","user_id_hash":"aae0b94055a9","env":"dev","model":"claude-sonnet-4-5","session_id":"k4-l3a-challenge-s02","correlation_id":"req-309c0d9d","feature":"monitoring","level":"info","ts":"2026-09-29T09:15:42.207110Z"}
+{"service":"api","latency_ms":2664,"ttft_ms":50,"tokens_in":34,"tokens_out":177,"cost_usd":0.002757,"quality_score":0.9,"tool_name":"retrieval","tool_success":true,"trace_id":"a8628692e939913889d253bb71e9e293","prompt_version":"1","prompt_label":"production","payload":{"answer_preview":"Starter answer. You should improve this output logic and add better quality chec..."},"event":"response_sent","user_id_hash":"aae0b94055a9","env":"dev","model":"claude-sonnet-4-5","session_id":"k4-l3a-challenge-s02","correlation_id":"req-309c0d9d","feature":"monitoring","level":"info","ts":"2026-09-29T09:15:44.876118Z"}

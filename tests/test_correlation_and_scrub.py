@@ -74,3 +74,11 @@ def test_scrub_moi_truong_ke_ca_long_nhau() -> None:
     out = json.dumps(scrub_event(None, "error", event), ensure_ascii=False)
     for raw in ("0901234567", "student@vinuni.edu.vn", "4111 1111 1111 1111"):
         assert raw not in out
+
+
+def test_scrub_bo_qua_id_he_thong() -> None:
+    trace_id = "8968fc9b123456789012c176ae223299"
+    out = scrub_event(None, "info", {"event": "response_sent", "trace_id": trace_id,
+                                     "payload": {"note": "CCCD 079204001234"}})
+    assert out["trace_id"] == trace_id
+    assert "079204001234" not in json.dumps(out)

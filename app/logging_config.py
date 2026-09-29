@@ -23,8 +23,9 @@ class JsonlFileProcessor:
 
 
 
-# Trường do hệ thống sinh, không bao giờ chứa dữ liệu người dùng -> bỏ qua cho nhanh.
-_SKIP_SCRUB_KEYS = {"ts", "level"}
+# Trường do hệ thống sinh, không chứa dữ liệu người dùng -> không scrub (tránh che nhầm làm
+# vỡ khả năng nối log<->trace). correlation_id từ client đã được middleware lọc PII trước khi bind.
+_SKIP_SCRUB_KEYS = {"ts", "level", "trace_id", "correlation_id", "user_id_hash"}
 
 
 def _scrub_value(value: Any) -> Any:
